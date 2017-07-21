@@ -1,7 +1,13 @@
- project(ShellingViewer)
+
+cmake_minimum_required(VERSION 2.8)
+
+project(ShellingViewer)
 
 include_directories($ENV{MESHLIB1.0_PATH})
 
 include_directories($ENV{EIGEN_PATH})
-
-add_executable(ShellingViewer ShellingViewer.cpp)
+file(GLOB SRC
+    "*.h"
+    "*.cpp"
+)
+add_executable(ShellingViewer ${SRC})

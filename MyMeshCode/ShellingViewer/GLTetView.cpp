@@ -20,7 +20,9 @@
 #include <GL\freeglut_ext.h>
 
 #define FACE_COLOR 0.8,0.8,0.8
-
+#define ZOOM_LEVEL 100.0 
+#define SOLID_MODE 1
+#define WIRE_MODE 2
 using std::cout;
 using std::endl;
 using namespace MeshLib;
@@ -48,13 +50,20 @@ int shadeFlag = 0;
 /* rotation quaternion and translation vector for the object */
 CQrot       ObjRot(0, 0, 1, 0);
 CPoint      ObjTrans(0, 0, 0);
-
+CPoint		TetCenter;
 extern std::shared_ptr<CTMeshGL> pMesh;
 extern std::shared_ptr<std::list<CTetShelling *>> shellingList;
 std::list < CTetShelling *> renderList;
+bool drawCircumSphere = false;
+int circumSphereMod = SOLID_MODE;
 
 extern int argcG;
 extern char** argvG;
+struct Sphere {
+	CPoint center;
+	double radius;
+};
+extern struct Sphere sphere;
 
 /* arcball object */
 CArcball arcball;
@@ -114,7 +123,7 @@ void draw_axis()
 void draw_half_faces()
 {
 	std::list<CHalfFace *> &HalfFaces = pMesh->half_faces();
-	CPoint center = shellingList->front()->vertex(0)->position();
+	TetCenter = shellingList->front()->vertex(0)->position();
 
 	//glBindTexture(GL_TEXTURE_2D, texName);
 	glBegin(GL_TRIANGLES);
@@ -149,7 +158,7 @@ void draw_half_faces()
 				n = fn / fn.norm();
 
 				glNormal3d(n[0], n[1], n[2]);
-				pt = 100.0 * (pt - center);
+				pt = ZOOM_LEVEL * (pt - TetCenter);
 				glVertex3d(pt[0], pt[1], pt[2]);
 			}
 		}
@@ -157,7 +166,16 @@ void draw_half_faces()
 	glEnd();
 }
 
-
+void draw_circumsphereFunc() {
+	CPoint newCenter = (sphere.center - TetCenter) * ZOOM_LEVEL;
+	glColor3f(1.0f, 1.0f, 1.0f);
+	glTranslatef(newCenter[0], newCenter[1], newCenter[2]);
+	if (circumSphereMod == SOLID_MODE)
+		glutSolidSphere(sphere.radius * ZOOM_LEVEL, 40, 40);
+	else if (circumSphereMod == WIRE_MODE)
+		glutWireSphere(sphere.radius * ZOOM_LEVEL, 40, 40);
+	glEnd();
+}
 
 /*! display call back function
 */
@@ -174,6 +192,8 @@ void display()
 
 	draw_half_faces();
 	draw_axis();
+	if (drawCircumSphere)
+		draw_circumsphereFunc();
 
 	glPopMatrix();
 	glutSwapBuffers();
@@ -209,6 +229,8 @@ void help()
 	printf("w  -  Wireframe Display\n");
 	printf("f  -  Flat Shading \n");
 	printf("s  -  Smooth Shading\n");
+	printf("d  -  Show solid circumshpre of first tet. \n");
+	printf("a  -  Show wire circumshpre of first tet. \n");
 	printf("?  -  Help Information\n");
 	printf("esc - quit\n");
 }
@@ -231,6 +253,15 @@ void keyBoard(unsigned char key, int x, int y)
 	case 'w':
 		//Wireframe mode
 		glPolygonMode(GL_FRONT, GL_LINE);
+		break;
+	case 'd':
+		drawCircumSphere = !drawCircumSphere;
+		break;
+	case 'q':
+		circumSphereMod = SOLID_MODE;
+		break;
+	case 'a':
+		circumSphereMod = WIRE_MODE;
 		break;
 	case '?':
 		help();
