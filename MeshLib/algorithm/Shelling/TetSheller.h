@@ -342,7 +342,9 @@ namespace MeshLib{
 		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
 		inline E * CTetSheller<TV, V, HE, TE, E, HF, F, T>::oppositeEdgeOfTwoFaces(T * newSimplex, F * pF0, F * pF1)
 		{
-			for (TetEdgeIterator())
+			for (TetEdgeIterator TEIter(pMesh, newSimplex); !TEIter.end(); ++TEIter) {
+				
+			}
 			return ;
 		}
 
