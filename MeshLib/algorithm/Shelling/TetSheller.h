@@ -303,12 +303,12 @@ namespace MeshLib{
 		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
 		inline int CTetSheller<TV, V, HE, TE, E, HF, F, T>::numFaceOnSurfaceInShelling(T * pTet)
 		{
-			int num;
+			int num = 0;
 			for (TetHalfFaceIterator THfIter(pMesh, pTet); !THfIter.end(); ++THfIter) {
 				HF * pHF = *THfIter;
 				HF * pDualHF = pMesh->HalfFaceDual(pHF);
 				
-				if ( == NULL) {
+				if (pDualHF == NULL) {
 					++num;
 				}
 				else
@@ -342,7 +342,7 @@ namespace MeshLib{
 		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
 		inline E * CTetSheller<TV, V, HE, TE, E, HF, F, T>::oppositeEdgeOfTwoFaces(T * newSimplex, F * pF0, F * pF1)
 		{
-			for (pTet)
+			for (TetEdgeIterator())
 			return ;
 		}
 
@@ -353,7 +353,7 @@ namespace MeshLib{
 				HF * pHF = *THfIter;
 				HF * pDualHF = pMesh->HalfFaceDual(pHF);
 
-				if (== NULL) {
+				if (pDualHF == NULL) {
 					pFacesOnSurface.push_back(pMesh->HalfFaceFace(pHF));
 				}
 				else
