@@ -19,20 +19,16 @@
 using std::cout;
 using std::endl;
 
-namespace MeshLib {
-	namespace TMeshLib {
+namespace MeshLib{
+	namespace TetLib{
 		class CTetShelling : public CTet
 		{
 		public:
-			int numFacesOnSurfaceInShelling();
 			bool inCandidateList = false;
 			bool inShellingOrder = false;
 			bool visible = false;
 		};
-		int MeshLib::TMeshLib::CTetShelling::numFacesOnSurfaceInShelling()
-		{
-			return 0;
-		}
+
 		template< typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
 		class CTetSheller {
 		public:
@@ -68,6 +64,10 @@ namespace MeshLib {
 			T* greedilyChooseShellingBackTrace(std::list<T*> &tList);
 
 			bool isShelling(T* newSimplex);
+			bool isReverseShelling(T* newSimplex);
+
+			int numFaceOnSurfaceInShelling(T* ptet);
+
 			bool backTraceShelling(T* nextSimplex);
 			void putInCandidateList( T* candidateSimplex);
 			void putInShellingList(T* nextSimplex);
@@ -253,6 +253,46 @@ namespace MeshLib {
 						}
 					}
 				}
+			}
+			return true;
+		}
+
+		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
+		bool CTetSheller<TV, V, HE, TE, E, HF, F, T>::isReverseShelling(T * newSimplex)
+		{
+			switch (numFaceOnSurfaceInShelling(newSimplex))
+			{
+			case 1:
+				/* In this case, it is a shelling iff:
+				*  the opposite vertex of the face on surface is not on the surface. 
+				*/
+				for (size_t i = 0; i < 4; ++i)
+				{
+					//V * pV = newSimplex->vertex(i);
+					pV = pMesh->TetTVertex(i);
+
+					if (!isBoundaryVertexInShelling(pV))
+						return true;
+				}
+				return false;
+				break;
+			case 2:
+				/* In this case, it is a shelling iff:
+				*  the opposite edge of the two faces on surface is not on the surface
+				*/
+				std::vector<F*> pFacesOnSurface(2);
+				getFacesOnSurfaceInShelling(pFacesOnSurface);
+				F * pF0 = pFacesOnSurface[0];
+				F * pF1 = pFacesOnSurface[1];
+				E * pE = oppositeEdgeOfTwoFaces(pF0, pF1);
+				if (isBoundaryEdgeInShelling(pE))
+					return false;
+				else
+					return true;
+				break;
+			default:
+				return true;
+				break;
 			}
 			return true;
 		}
