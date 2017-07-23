@@ -39,7 +39,8 @@ namespace MeshLib{
 			typedef TVertexInHalfEdgeIterator< TV, V, HE, TE, E, HF, F, T> TVertexInHalfEdgeIterator;
 			typedef VertexTVertexIterator< TV, V, HE, TE, E, HF, F, T> VertexTVertexIterator;
 			typedef TetEdgeIterator< TV, V, HE, TE, E, HF, F, T> TetEdgeIterator;
-
+			typedef HalfFaceHalfEdgeIterator< TV, V, HE, TE, E, HF, F, T> HalfFaceHalfEdgeIterator;
+			typedef EdgeTEdgeIterator< TV, V, HE, TE, E, HF, F, T> EdgeTEdgeIterator;
 			bool shellingDone = false;
 
 			CTetSheller(std::shared_ptr<CShellerTMesh> pMesh) : m_pShellingOrder(new std::list<T *>) {
@@ -51,8 +52,10 @@ namespace MeshLib{
 			void shellingBreadthFirstRandom(std::list<T*> & sourceList);
 			void shellingBreadthFirstBackTrace(std::list<T*> & sourceList);
 			void shellingBreadthFirstGreedy(std::list<T*> & sourceList);
+			void biShellingBreadthFirstGreedy(std::list<T*> & sourceList);
 			bool shellingBackTrace();
-			
+			int numFaceOnSurfaceInShelling(T* pTet);
+
 		private:
 			std::shared_ptr<CShellerTMesh> m_pMesh;
 			std::shared_ptr<std::list<T *>> m_pShellingOrder;
@@ -61,14 +64,16 @@ namespace MeshLib{
 			void makeCandidateList(std::list<T*> &_candidateList);
 			T* randomChooseShelling(std::list<T*> &tList);
 			T* greedilyChooseShelling(std::list<T*> &tList);
+			T* greedilyChooseBishelling(std::list<T*> &tList);
 			T* greedilyChooseShellingBackTrace(std::list<T*> &tList);
 
 			bool isShelling(T* newSimplex);
 			bool isReverseShelling(T* newSimplex);
+			bool isBishelling(T* newSimplex);
 
-			int numFaceOnSurfaceInShelling(T* pTet);
 			bool isBoundaryVertexInShelling(V* pV);
 			bool isBoundaryEdgeInShelling(E* pE);
+			bool edgeInFace(E *pE, F *pF0);
 			void getFacesOnSurfaceInShelling(std::vector<F*> &pFacesOnSurface, T * pTet);
 			E * oppositeEdgeOfTwoFaces(T* newSimplex, F* pF0, F* pF1);
 
@@ -145,6 +150,39 @@ namespace MeshLib{
 			shellingDone = true;
 			cout << "Congratulations, the shelling procedure succeeded." << endl;
 		}
+		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
+		void CTetSheller<TV, V, HE, TE, E, HF, F, T>::biShellingBreadthFirstGreedy(std::list<T*>& sourceList)
+		{
+			cout << "Bishelling Breadth First greedy begins. First tet must be on the boundary or the algorithm will terminate." << endl;
+
+			for (auto sourceIter = sourceList.begin(); sourceIter != sourceList.end(); ++sourceIter) {
+				T* beginsource = *sourceIter;
+				putInCandidateList(beginsource);
+			}
+
+			while (!candidateList.empty()) {
+
+				T* pSimplex = greedilyChooseBishelling(candidateList);;
+				putInShellingList(pSimplex);
+
+				//for (MeshVertexIterator viter(this); !viter.end(); ++viter)
+				for (TetHalfFaceIterator THFItr(m_pMesh.get(), pSimplex); !THFItr.end(); ++THFItr) {
+					HF* pHF = *THFItr;
+					HF* pDualHF = (HF*)pHF->dual();
+					if (pDualHF != NULL) {
+						T* pNextSimplex = (T*)pDualHF->tet();
+						if (!pNextSimplex->inCandidateList && !pNextSimplex->inShellingOrder) {
+							putInCandidateList(pNextSimplex);
+						}
+					}
+				}
+				if (m_pShellingOrder->size() % 100 == 0) {
+					cout << m_pShellingOrder->size() << " simplices in shelling order." << endl;
+				}
+			}
+			shellingDone = true;
+			cout << "Congratulations, the shelling procedure succeeded." << endl;
+		}
 
 		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
 		T * CTetSheller<TV, V, HE, TE, E, HF, F, T>::randomChooseShelling(std::list<T*>& tList)
@@ -186,6 +224,29 @@ namespace MeshLib{
 			}
 			return NULL;
 
+		}
+
+		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
+		inline T * CTetSheller<TV, V, HE, TE, E, HF, F, T>::greedilyChooseBishelling(std::list<T*>& tList)
+		{
+			std::list<T*>::iterator FLItr = tList.begin();
+			T* simplex;
+
+			for (; FLItr != tList.end(); ++FLItr)
+			{
+				simplex = *FLItr;
+				if (isBishelling(simplex)) {
+					removeFromCandidateList(FLItr);
+					return simplex;
+				}
+			}
+			if (FLItr == tList.end()) {
+				std::cerr << "Shelling Failed.";
+				exit(0);
+			}
+			return NULL;
+
+			return NULL;
 		}
 
 		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
@@ -266,6 +327,9 @@ namespace MeshLib{
 		{
 			switch (numFaceOnSurfaceInShelling(newSimplex))
 			{
+			case 0:
+				return false;
+				break;
 			case 1:
 				/* In this case, it is a shelling iff:
 				*  the opposite vertex of the face on surface is not on the surface. 
@@ -273,7 +337,7 @@ namespace MeshLib{
 				for (size_t i = 0; i < 4; ++i)
 				{
 					//V * pV = newSimplex->vertex(i);
-					pV = pMesh->TetTVertex(i);
+					V *pV = (V*)pMesh->TetTVertex(newSimplex, i)->vert();
 
 					if (!isBoundaryVertexInShelling(pV))
 						return true;
@@ -284,8 +348,9 @@ namespace MeshLib{
 				/* In this case, it is a shelling iff:
 				*  the opposite edge of the two faces on surface is not on the surface
 				*/
-				std::vector<F*> pFacesOnSurface(2);
-				getFacesOnSurfaceInShelling(newSimplex, pFacesOnSurface);
+			{
+				std::vector<F*> pFacesOnSurface;
+				getFacesOnSurfaceInShelling(pFacesOnSurface, newSimplex);
 				F * pF0 = pFacesOnSurface[0];
 				F * pF1 = pFacesOnSurface[1];
 				E * pE = oppositeEdgeOfTwoFaces(newSimplex, pF0, pF1);
@@ -294,17 +359,25 @@ namespace MeshLib{
 				else
 					return true;
 				break;
+			}
 			default:
 				return true;
 				break;
 			}
 			return true;
 		}
+
+		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
+		inline bool CTetSheller<TV, V, HE, TE, E, HF, F, T>::isBishelling(T * newSimplex)
+		{
+			return isShelling(newSimplex) && isReverseShelling(newSimplex);
+		}
+
 		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
 		inline int CTetSheller<TV, V, HE, TE, E, HF, F, T>::numFaceOnSurfaceInShelling(T * pTet)
 		{
 			int num = 0;
-			for (TetHalfFaceIterator THfIter(pMesh, pTet); !THfIter.end(); ++THfIter) {
+			for (TetHalfFaceIterator THfIter(pMesh.get(), pTet); !THfIter.end(); ++THfIter) {
 				HF * pHF = *THfIter;
 				HF * pDualHF = pMesh->HalfFaceDual(pHF);
 				
@@ -313,7 +386,7 @@ namespace MeshLib{
 				}
 				else
 				{
-					T* pNeiTet = pMesh->HalfFaceTet(pHF);
+					T* pNeiTet = pMesh->HalfFaceTet(pDualHF);
 					if (pNeiTet->inShellingOrder)
 						++num;
 				}
@@ -323,12 +396,26 @@ namespace MeshLib{
 		}
 
 		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
+		inline bool CTetSheller<TV, V, HE, TE, E, HF, F, T>::edgeInFace(E * pE, F * pF)
+		{
+			HF *pHF = (HF *) pF->left() != NULL ? pF->left() : pF->right();
+
+			for (HalfFaceHalfEdgeIterator HFHEITer(pMesh.get(), pHF); !HFHEITer.end(); ++HFHEITer) {
+				HE *pHE = *HFHEITer;
+				E *pEOnFace = (E *)pHE->tedge()->edge();
+				if ((pE->vertex1()->id() == pEOnFace->vertex1()->id()) && (pE->vertex2()->id() == pEOnFace->vertex2()->id()))
+					return true;
+			}
+			return false;
+		}
+
+		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
 		inline bool CTetSheller<TV, V, HE, TE, E, HF, F, T>::isBoundaryVertexInShelling(V * pV)
 		{
 			if (pV->boundary())
 				return true;
 			else {
-				for (VertexTVertexIterator VTVIter(pMesh, pV); !VTVIter.end(); ++VTVIter) {
+				for (VertexTVertexIterator VTVIter(pMesh.get(), pV); !VTVIter.end(); ++VTVIter) {
 					TV * pTV = *VTVIter;
 					T * pT = pMesh->TVertexTet(pTV);
 					if (pT->inShellingOrder) {
@@ -340,18 +427,38 @@ namespace MeshLib{
 		}
 
 		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
+		inline bool CTetSheller<TV, V, HE, TE, E, HF, F, T>::isBoundaryEdgeInShelling(E * pE)
+		{
+			if (pE->boundary())
+				return true;
+			for (EdgeTEdgeIterator ETIter(pMesh.get(), pE); !ETIter.end(); ++ETIter) {
+				TE *pTE = *ETIter;
+				T* pT = pMesh->TEdgeTet(pTE);
+				if (pT->inShellingOrder)
+					return true;
+			}
+			return false;
+		}
+
+		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
 		inline E * CTetSheller<TV, V, HE, TE, E, HF, F, T>::oppositeEdgeOfTwoFaces(T * newSimplex, F * pF0, F * pF1)
 		{
-			for (TetEdgeIterator TEIter(pMesh, newSimplex); !TEIter.end(); ++TEIter) {
-				
+			E * pE;
+			for (TetEdgeIterator TEIter(pMesh.get(), newSimplex); !TEIter.end(); ++TEIter) {
+				pE = *TEIter;
+				if (!edgeInFace(pE, pF0) && !edgeInFace(pE, pF1)) {
+					return pE;
+				}
 			}
-			return ;
+			//Should never gets here.
+			assert(true);
+			return pE;
 		}
 
 		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
 		inline void CTetSheller<TV, V, HE, TE, E, HF, F, T>::getFacesOnSurfaceInShelling(std::vector<F*> & pFacesOnSurface, T * pTet)
 		{
-			for (TetHalfFaceIterator THfIter(pMesh, pTet); !THfIter.end(); ++THfIter) {
+			for (TetHalfFaceIterator THfIter(pMesh.get(), pTet); !THfIter.end(); ++THfIter) {
 				HF * pHF = *THfIter;
 				HF * pDualHF = pMesh->HalfFaceDual(pHF);
 
@@ -360,7 +467,7 @@ namespace MeshLib{
 				}
 				else
 				{
-					T* pNeiTet = pMesh->HalfFaceTet(pHF);
+					T* pNeiTet = pMesh->HalfFaceTet(pDualHF);
 					if (pNeiTet->inShellingOrder)
 						pFacesOnSurface.push_back(pMesh->HalfFaceFace(pHF));
 				}

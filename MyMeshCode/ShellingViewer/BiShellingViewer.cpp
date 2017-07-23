@@ -1,10 +1,11 @@
 // TetOrientation.cpp : 定义控制台应用程序的入口点。
 //
-
+#include <algorithm>
 #include <MeshLib/core/TetMesh/BaseTMeshNew.h>
 #include <MeshLib/core/TetMesh/vertex.h>
 #include <MeshLib/core/TetMesh/tvertex.h>
-#include <MeshLib/core/TetMesh/edge.h>include <MeshLib/core/TetMesh/tedge.h>
+#include <MeshLib/core/TetMesh/edge.h>
+#include <MeshLib/core/TetMesh/tedge.h>
 #include <MeshLib/core/TetMesh/face.h>
 #include <MeshLib/core/TetMesh/halfface.h>
 #include <MeshLib/core/TetMesh/halfedge.h>
@@ -48,8 +49,18 @@ int main(int argc, char ** argv)
 	CTSheller sheller(pMesh);
 	CTetShelling * p_startTet = pMesh->idTet(10000);
 	std::list<CTetShelling *> beginList;
-	beginList.push_back(p_startTet);
-	sheller.shellingBreadthFirstGreedy(beginList);
+
+	auto isBoundaryTet = [&sheller](CTetShelling * pTet) {
+		if (sheller.numFaceOnSurfaceInShelling(pTet) > 0) {
+			return true;
+		}
+		return false;
+	};
+
+	auto pBoundryTetIter = std::find_if<>(pMesh->tets().begin(), pMesh->tets().end(), isBoundaryTet);
+
+	beginList.push_back(*pBoundryTetIter);
+	sheller.biShellingBreadthFirstGreedy(beginList);
 
 	shellingList = sheller.getShellingOrder();
 	CTetShelling * pFirstTet = shellingList->front();

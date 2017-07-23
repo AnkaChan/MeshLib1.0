@@ -448,7 +448,7 @@ namespace MeshLib
 				}
 			}
 
-			// label the boundary for faces and vertices
+			// label the boundary for faces, edges and vertices
 			for (std::list<CFace*>::iterator fiter = m_pFaces.begin(); fiter != m_pFaces.end(); ++fiter)
 			{
 				CFace * pF = *fiter;
@@ -458,6 +458,12 @@ namespace MeshLib
 					pF->boundary() = true;
 					CHalfFace * pH =
 						FaceLeftHalfFace(pF) == NULL ? FaceRightHalfFace(pF) : FaceLeftHalfFace(pF);
+					typedef HalfFaceHalfEdgeIterator< CTVertex, CVertex, CHalfEdge, CTEdge, CEdge, CHalfFace, CFace, CTet > HalfFaceHalfEdgeIterator;
+					for (HalfFaceHalfEdgeIterator HFHEIter(this, pH); !HFHEIter.end(); ++HFHEIter) {
+						CHalfEdge *pHE = *HFHEIter;
+						CEdge * pE = (CEdge *)HalfEdgeTEdge(pHE)->edge();
+						pE->boundary = true;
+					}
 
 					for (int i = 0; i < 3; ++i)
 					{
@@ -684,6 +690,12 @@ namespace MeshLib
 					pF->boundary() = true;
 					CHalfFace * pH =
 						FaceLeftHalfFace(pF) == NULL ? FaceRightHalfFace(pF) : FaceLeftHalfFace(pF);
+					typedef HalfFaceHalfEdgeIterator< CTVertex, CVertex, CHalfEdge, CTEdge, CEdge, CHalfFace, CFace, CTet > HalfFaceHalfEdgeIterator;
+					for (HalfFaceHalfEdgeIterator HFHEIter(this, pH); !HFHEIter.end(); ++HFHEIter) {
+						CHalfEdge *pHE = *HFHEIter;
+						CEdge * pE = (CEdge *)HalfEdgeTEdge(pHE)->edge();
+						pE->boundary() = true;
+					}
 
 					for (int i = 0; i < 3; ++i)
 					{
