@@ -17,13 +17,13 @@
 #include <MeshLib/core/Geometry/Circumsphere.h>
 #include <MeshLib/core/Geometry/Point.h>
 
-#include "GLTetView.h"
+#include "GLTetViewReverseShelling.h"
 
 
 using namespace MeshLib;
 using namespace MeshLib::TMeshLib;
-typedef CTMesh<CTVertex, CVertex, CHalfEdge, CTEdge, CEdge, CHalfFace, CFace, CTetShelling> MyTMesh;
-typedef CTetSheller<CTVertex, CVertex, CHalfEdge, CTEdge, CEdge, CHalfFace, CFace, CTetShelling> CTSheller;
+typedef CTMesh<CTVertex, CVertex, CHalfEdge, CTEdge, CEdge, CHalfFace, CFaceShelling, CTetShelling> MyTMesh;
+typedef CTetSheller<CTVertex, CVertex, CHalfEdge, CTEdge, CEdge, CHalfFace, CFaceShelling, CTetShelling> CTSheller;
 
 std::shared_ptr<MyTMesh> pMesh(new MyTMesh);
 std::shared_ptr<std::list<CTetShelling *>> shellingList;
@@ -47,7 +47,7 @@ int main(int argc, char ** argv)
 	mesh._load_t(argv[1]);
 	std::cout << "Load done.\n";
 	CTSheller sheller(pMesh);
-	CTetShelling * p_startTet = pMesh->idTet(10000);
+	//CTetShelling * p_startTet = pMesh->idTet(10000);
 	std::list<CTetShelling *> beginList;
 
 	auto isBoundaryTet = [&sheller](CTetShelling * pTet) {

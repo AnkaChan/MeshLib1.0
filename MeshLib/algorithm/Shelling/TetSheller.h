@@ -28,7 +28,11 @@ namespace MeshLib{
 			bool inShellingOrder = false;
 			bool visible = false;
 		};
-
+		class CFaceShelling : public CFace
+		{
+		public:
+			bool boundaryInShelling = false;
+		};
 		template< typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
 		class CTetSheller {
 		public:
@@ -179,6 +183,8 @@ namespace MeshLib{
 				if (m_pShellingOrder->size() % 100 == 0) {
 					cout << m_pShellingOrder->size() << " simplices in shelling order." << endl;
 				}
+				if (m_pShellingOrder->size() > 10000)
+					break;
 			}
 			shellingDone = true;
 			cout << "Congratulations, the shelling procedure succeeded." << endl;
@@ -394,6 +400,7 @@ namespace MeshLib{
 
 			return num;
 		}
+
 
 		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
 		inline bool CTetSheller<TV, V, HE, TE, E, HF, F, T>::edgeInFace(E * pE, F * pF)

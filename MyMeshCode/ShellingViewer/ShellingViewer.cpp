@@ -4,7 +4,8 @@
 #include <MeshLib/core/TetMesh/BaseTMeshNew.h>
 #include <MeshLib/core/TetMesh/vertex.h>
 #include <MeshLib/core/TetMesh/tvertex.h>
-#include <MeshLib/core/TetMesh/edge.h>include <MeshLib/core/TetMesh/tedge.h>
+#include <MeshLib/core/TetMesh/edge.h>
+#include <MeshLib/core/TetMesh/tedge.h>
 #include <MeshLib/core/TetMesh/face.h>
 #include <MeshLib/core/TetMesh/halfface.h>
 #include <MeshLib/core/TetMesh/halfedge.h>
