@@ -17,14 +17,19 @@
 #include <MeshLib/core/Geometry/Circumsphere.h>
 #include <MeshLib/core/Geometry/Point.h>
 
-#include "GLTetView.h"
+#include "GLTetViewReverseShelling.h"
 
 
 using namespace MeshLib;
 using namespace MeshLib::TMeshLib;
+<<<<<<< HEAD
 typedef TInterface<CTVertex, CVertex, CHalfEdge, CTEdge, CEdge, CHalfFace, CFace, CTetShelling> TIf;
 typedef CTMesh<CTVertex, CVertex, CHalfEdge, CTEdge, CEdge, CHalfFace, CFace, CTetShelling> MyTMesh;
 typedef CTetSheller<TIf> CTSheller;
+=======
+typedef CTMesh<CTVertex, CVertex, CHalfEdge, CTEdge, CEdge, CHalfFace, CFaceShelling, CTetShelling> MyTMesh;
+typedef CTetSheller<CTVertex, CVertex, CHalfEdge, CTEdge, CEdge, CHalfFace, CFaceShelling, CTetShelling> CTSheller;
+>>>>>>> b7d09589bd9f0f56de41d9df6fe6c978613c4b6e
 
 MyTMesh* pMesh(new MyTMesh);
 std::shared_ptr<std::list<CTetShelling *>> shellingList;
@@ -48,7 +53,11 @@ int main(int argc, char ** argv)
 	mesh._load_t(argv[1], true);
 	std::cout << "Load done.\n";
 	CTSheller sheller(pMesh);
+<<<<<<< HEAD
 	CTetShelling * p_startTet = pMesh->idTet(50);
+=======
+	//CTetShelling * p_startTet = pMesh->idTet(10000);
+>>>>>>> b7d09589bd9f0f56de41d9df6fe6c978613c4b6e
 	std::list<CTetShelling *> beginList;
 
 	auto isBoundaryTet = [&sheller](CTetShelling * pTet) {
