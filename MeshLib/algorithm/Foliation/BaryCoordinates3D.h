@@ -19,13 +19,13 @@ namespace MeshLib
 			CBaryCoordinates3D()  {};
 
 			CVertex* getCorrespondingPVertex(int i) { assert(i >= 0 && i < DIMENSION_BARYCOORD_3D); return vpVerticeCorresponding[i]; };
-			CHalfFace* getCorrespondingPHalfface(int i) { assert(i >= 0 && i < DIMENSION_BARYCOORD_3D); return vpHalffaceCorresponding[i]; };
+			CHalfFace* getCorrespondingPHalfface(int i) { assert(i >= 0 && i < DIMENSION_BARYCOORD_3D); return vpHalfEdgeCorresponding[i]; };
 
 			void setVpVertice(CVertex* value, int i) { assert(i >= 0 && i < DIMENSION_BARYCOORD_3D); vpVerticeCorresponding[i] = value; };
-			void setVpHalfface(CHalfFace* value, int i) { assert(i >= 0 && i < DIMENSION_BARYCOORD_3D); vpHalffaceCorresponding[i] = value; };
+			void setVpHalfface(CHalfFace* value, int i) { assert(i >= 0 && i < DIMENSION_BARYCOORD_3D); vpHalfEdgeCorresponding[i] = value; };
 		private:
 			CVertex* vpVerticeCorresponding[DIMENSION_BARYCOORD_3D];
-			CHalfFace* vpHalffaceCorresponding[DIMENSION_BARYCOORD_3D];
+			CHalfFace* vpHalfEdgeCorresponding[DIMENSION_BARYCOORD_3D];
 		};
 
 	}

@@ -1,26 +1,26 @@
 #pragma once
 #include <iostream>
 #include <memory>
-#include "../../MeshLib/core/TetMesh/BaseTMeshNew.h"
-#include "../../MeshLib/core/TetMesh/vertex.h"
-#include "../../MeshLib/core/TetMesh/tvertex.h"
-#include "../../MeshLib/core/TetMesh/edge.h"
-#include "../../MeshLib/core/TetMesh/tedge.h"
-#include "../../MeshLib/core/TetMesh/face.h"
-#include "../../MeshLib/core/TetMesh/halfface.h"
-#include "../../MeshLib/core/TetMesh/halfedge.h"
-
-#include "../../MeshLib/core/TetMesh/tet.h"
-
-#include "../../MeshLib/core/TetMesh/titerators.h"
-#include "../../MeshLib/core/viewer/Arcball.h"                           /*  Arc Ball  Interface         */
-#include "../../MeshLib/algorithm/Shelling/TetSheller.h"
+#include <MeshLib/core/TetMesh/BaseTMesh.h>
+#include <MeshLib/core/TetMesh/vertex.h>
+#include <MeshLib/core/TetMesh/tvertex.h>
+#include <MeshLib/core/TetMesh/edge.h>
+#include <MeshLib/core/TetMesh/tedge.h>
+#include <MeshLib/core/TetMesh/face.h>
+#include <MeshLib/core/TetMesh/halfface.h>
+#include <MeshLib/core/TetMesh/halfedge.h>
+		 
+#include <MeshLib/core/TetMesh/tet.h>
+		 
+#include <MeshLib/core/TetMesh/titerators.h>
+#include <MeshLib/core/viewer/Arcball.h>                         /*  Arc Ball  Interface         */
+#include <MeshLib/algorithm/Shelling/TetSheller.h>
 
 #include <GL\glut.h>
 #include <GL\freeglut_ext.h>
 
 #define FACE_COLOR 0.8,0.8,0.8
-#define ZOOM_LEVEL 100.0 
+#define ZOOM_LEVEL 1.0 
 #define SOLID_MODE 1
 #define WIRE_MODE 2
 using std::cout;
@@ -51,8 +51,8 @@ int shadeFlag = 0;
 CQrot       ObjRot(0, 0, 1, 0);
 CPoint      ObjTrans(0, 0, 0);
 CPoint		TetCenter;
-extern std::shared_ptr<CTMeshGL> pMesh;
-extern std::shared_ptr<std::list<CTetShelling *>> shellingList;
+extern CTMeshGL* pMesh;
+extern std::shared_ptr<std::list<CTetShelling*>> shellingList;
 std::list < CTetShelling *> renderList;
 bool drawCircumSphere = false;
 int circumSphereMod = SOLID_MODE;
@@ -131,7 +131,7 @@ void draw_half_faces()
 	for (auto renderTetIter = renderList.begin(); renderTetIter != renderList.end(); ++renderTetIter)
 	{
 		CTetGL *pT = *renderTetIter;
-		for (THfIterator THfIter(pMesh.get(), pT); !THfIter.end(); ++THfIter)
+		for (THfIterator THfIter(pMesh, pT); !THfIter.end(); ++THfIter)
 		{
 			glColor3f(FACE_COLOR);
 			CHalfFace *pHF = *THfIter;
@@ -141,7 +141,7 @@ void draw_half_faces()
 					continue;
 				}
 			}
-			for (HfVIterator fvIter(pMesh.get(), pHF); !fvIter.end(); ++fvIter)
+			for (HfVIterator fvIter(pMesh, pHF); !fvIter.end(); ++fvIter)
 			{
 				CVertexGL * v = *fvIter;
 				CPoint pt = v->position();

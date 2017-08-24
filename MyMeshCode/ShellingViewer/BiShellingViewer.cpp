@@ -1,7 +1,7 @@
 // TetOrientation.cpp : 定义控制台应用程序的入口点。
 //
 #include <algorithm>
-#include <MeshLib/core/TetMesh/BaseTMeshNew.h>
+#include <MeshLib/core/TetMesh/BaseTMesh.h>
 #include <MeshLib/core/TetMesh/vertex.h>
 #include <MeshLib/core/TetMesh/tvertex.h>
 #include <MeshLib/core/TetMesh/edge.h>
@@ -22,10 +22,11 @@
 
 using namespace MeshLib;
 using namespace MeshLib::TMeshLib;
+typedef TInterface<CTVertex, CVertex, CHalfEdge, CTEdge, CEdge, CHalfFace, CFace, CTetShelling> TIf;
 typedef CTMesh<CTVertex, CVertex, CHalfEdge, CTEdge, CEdge, CHalfFace, CFace, CTetShelling> MyTMesh;
-typedef CTetSheller<CTVertex, CVertex, CHalfEdge, CTEdge, CEdge, CHalfFace, CFace, CTetShelling> CTSheller;
+typedef CTetSheller<TIf> CTSheller;
 
-std::shared_ptr<MyTMesh> pMesh(new MyTMesh);
+MyTMesh* pMesh(new MyTMesh);
 std::shared_ptr<std::list<CTetShelling *>> shellingList;
 MyTMesh & mesh = *pMesh;
 int argcG;
@@ -44,10 +45,10 @@ int main(int argc, char ** argv)
 		std::cout << "Please give a input directory." << std::endl;
 		return 0;
 	}
-	mesh._load_t(argv[1]);
+	mesh._load_t(argv[1], true);
 	std::cout << "Load done.\n";
 	CTSheller sheller(pMesh);
-	CTetShelling * p_startTet = pMesh->idTet(10000);
+	CTetShelling * p_startTet = pMesh->idTet(50);
 	std::list<CTetShelling *> beginList;
 
 	auto isBoundaryTet = [&sheller](CTetShelling * pTet) {
@@ -60,7 +61,7 @@ int main(int argc, char ** argv)
 	auto pBoundryTetIter = std::find_if<>(pMesh->tets().begin(), pMesh->tets().end(), isBoundaryTet);
 
 	beginList.push_back(*pBoundryTetIter);
-	sheller.biShellingBreadthFirstGreedy(beginList);
+	sheller.shellingBreadthFirstGreedy(beginList);
 
 	shellingList = sheller.getShellingOrder();
 	CTetShelling * pFirstTet = shellingList->front();
